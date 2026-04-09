@@ -67,8 +67,8 @@ LOCATIONS.forEach(loc => {
 // ══════════════════════════════════════════════════════════
 //  NEWS FETCHING — Google News RSS via CORS proxy
 // ══════════════════════════════════════════════════════════
-const newsCache = new Map(); // keyword -> { articles, fetchedAt }
-const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+const newsCache = new Map();
+const CACHE_TTL = 10 * 60 * 1000;
 const PROXY_BASE = 'https://corsproxy.io/?';
 
 function buildProxiedRssUrl(keywords) {
@@ -90,13 +90,11 @@ function parseRssXml(xmlText) {
     const pubDate = item.querySelector('pubDate')?.textContent || '';
     const source = item.querySelector('source')?.textContent || '';
 
-    // Extract thumbnail from description HTML
     const descHtml = item.querySelector('description')?.textContent || '';
     let thumb = '';
     const imgMatch = descHtml.match(/<img[^>]+src="([^"]+)"/);
     if (imgMatch) thumb = imgMatch[1];
 
-    // Strip " - SourceName" suffix from title since source is shown separately
     const cleanTitle = source && title.endsWith(' - ' + source)
       ? title.slice(0, -((' - ' + source).length))
       : title;
@@ -124,6 +122,9 @@ async function fetchNews(keywords) {
   return articles;
 }
 
+// ══════════════════════════════════════════════════════════
+//  TIME HELPERS
+// ══════════════════════════════════════════════════════════
 function timeAgo(dateStr) {
   const now = Date.now();
   const then = new Date(dateStr).getTime();
@@ -138,13 +139,30 @@ function timeAgo(dateStr) {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+function getTimeGroup(dateStr) {
+  const now = new Date();
+  const then = new Date(dateStr);
+  const diffMs = now - then;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  // Check if same calendar day
+  if (now.toDateString() === then.toDateString()) return 'Today';
+  if (diffDays <= 1) return 'Yesterday';
+  if (diffDays <= 7) return 'This Week';
+  if (diffDays <= 14) return 'Last Week';
+  if (diffDays <= 30) return 'This Month';
+  return 'Older';
+}
+
+const TIME_GROUP_ORDER = ['Today', 'Yesterday', 'This Week', 'Last Week', 'This Month', 'Older'];
+
 // ══════════════════════════════════════════════════════════
-//  SIDEBAR — viewport-driven live news feed
+//  SIDEBAR — unified chronological news feed
 // ══════════════════════════════════════════════════════════
 const sidebarBody = document.getElementById('sidebarBody');
 const visibleCountEl = document.getElementById('visibleCount');
 let activeFilter = 'all';
-let renderGeneration = 0; // prevent stale renders
+let renderGeneration = 0;
 
 function getVisibleLocations() {
   const bounds = map.getBounds();
@@ -155,6 +173,7 @@ function getVisibleLocations() {
 }
 
 function renderArticleHtml(article) {
+  const catColor = CATEGORY_COLORS[article._loc.category];
   const thumbHtml = article.thumb
     ? `<img class="news-article-thumb" src="${article.thumb}" alt="" loading="lazy" onerror="this.remove()">`
     : '';
@@ -164,13 +183,53 @@ function renderArticleHtml(article) {
       <div class="news-article-body">
         <div class="news-article-source">
           <span class="news-article-source-name">${article.source}</span>
+          <span class="news-article-time">${timeAgo(article.pubDate)}</span>
         </div>
         <div class="news-article-title">${article.title}</div>
-        <div class="news-article-time">${timeAgo(article.pubDate)}</div>
+        <span class="news-article-tag" style="background:${catColor}18;color:${catColor};">
+          <span class="news-article-tag-dot" style="background:${catColor};"></span>
+          ${article._loc.name}
+        </span>
       </div>
       ${thumbHtml}
     </a>
   `;
+}
+
+function renderFeed(allArticles) {
+  // Deduplicate by URL
+  const seen = new Set();
+  const unique = allArticles.filter(a => {
+    if (seen.has(a.link)) return false;
+    seen.add(a.link);
+    return true;
+  });
+
+  // Sort newest first
+  unique.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+
+  // Group by time period
+  const groups = {};
+  unique.forEach(article => {
+    const group = getTimeGroup(article.pubDate);
+    if (!groups[group]) groups[group] = [];
+    groups[group].push(article);
+  });
+
+  // Render grouped
+  let html = '';
+  TIME_GROUP_ORDER.forEach(groupName => {
+    const articles = groups[groupName];
+    if (!articles || articles.length === 0) return;
+    html += `<div class="time-group-header">${groupName}</div>`;
+    html += articles.map(renderArticleHtml).join('');
+  });
+
+  if (html === '') {
+    sidebarBody.innerHTML = `<div class="sidebar-empty">No news found for visible locations.</div>`;
+  } else {
+    sidebarBody.innerHTML = html;
+  }
 }
 
 function renderSidebar() {
@@ -185,63 +244,34 @@ function renderSidebar() {
     return;
   }
 
-  // Sort: under_construction first, then planned, then stalled, then completed
-  const statusOrder = { under_construction: 0, planned: 1, stalled: 2, completed: 3 };
-  visible.sort((a, b) => (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9));
+  // Show loading
+  sidebarBody.innerHTML = `
+    <div class="news-loading" style="justify-content:center;padding:30px 16px;">
+      <div class="news-loading-spinner"></div>
+      Loading news for ${visible.length} locations...
+    </div>
+  `;
 
-  // Build skeleton with loading states
-  sidebarBody.innerHTML = visible.map(loc => {
-    const catColor = CATEGORY_COLORS[loc.category];
-    const st = STATUS_CONFIG[loc.status];
-    const newsUrl = `https://www.google.com/search?q=${encodeURIComponent(loc.searchKeywords)}&tbm=nws`;
+  // Fetch all in parallel, collect results
+  const allArticles = [];
+  let completed = 0;
 
-    return `
-      <div class="loc-group" data-id="${loc.id}">
-        <div class="loc-group-header" data-loc-id="${loc.id}">
-          <span class="loc-group-dot" style="background:${catColor};"></span>
-          <span class="loc-group-name">${loc.name}</span>
-          <span class="loc-group-status" style="background:${st.color}18;color:${st.color};">${st.label}</span>
-        </div>
-        <div class="loc-group-articles" id="articles-${loc.id}">
-          <div class="news-loading">
-            <div class="news-loading-spinner"></div>
-            Loading news...
-          </div>
-        </div>
-        <a class="news-fallback-link" href="${newsUrl}" target="_blank" rel="noopener">
-          More on Google News &rarr;
-        </a>
-      </div>
-    `;
-  }).join('');
-
-  // Click location header to fly to it
-  sidebarBody.querySelectorAll('.loc-group-header').forEach(el => {
-    el.addEventListener('click', () => {
-      const loc = LOCATIONS.find(l => l.id === el.dataset.locId);
-      if (loc) map.setView([loc.lat, loc.lng], Math.max(map.getZoom(), 15), { animate: true });
-    });
-  });
-
-  // Fetch news for each location
   visible.forEach(loc => {
     fetchNews(loc.searchKeywords)
       .then(articles => {
-        if (gen !== renderGeneration) return; // stale
-        const container = document.getElementById(`articles-${loc.id}`);
-        if (!container) return;
-
-        if (articles.length === 0) {
-          container.innerHTML = `<div class="news-error">No recent news found.</div>`;
-        } else {
-          container.innerHTML = articles.map(renderArticleHtml).join('');
-        }
+        articles.forEach(a => {
+          a._loc = loc; // tag each article with its location
+          allArticles.push(a);
+        });
       })
-      .catch(() => {
+      .catch(() => {}) // silently skip failed fetches
+      .finally(() => {
+        completed++;
         if (gen !== renderGeneration) return;
-        const container = document.getElementById(`articles-${loc.id}`);
-        if (!container) return;
-        container.innerHTML = `<div class="news-error">Could not load news.</div>`;
+
+        if (completed === visible.length) {
+          renderFeed(allArticles);
+        }
       });
   });
 }
@@ -256,7 +286,6 @@ function debouncedRender() {
 map.on('moveend', debouncedRender);
 map.on('zoomend', debouncedRender);
 
-// Initial render
 renderSidebar();
 
 // ══════════════════════════════════════════════════════════
