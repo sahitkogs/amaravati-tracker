@@ -746,6 +746,13 @@ let hDragging = false;
 let hDragStartX = 0;
 let hDragStartWidth = 0;
 
+// Restore saved sidebar width
+const savedWidth = sessionStorage.getItem('sidebarWidth');
+if (savedWidth) {
+  sidebar.style.width = savedWidth + 'px';
+  setTimeout(() => map.invalidateSize(), 50);
+}
+
 resizeHandle.addEventListener('mousedown', (e) => {
   hDragging = true;
   hDragStartX = e.clientX;
@@ -769,5 +776,6 @@ document.addEventListener('mouseup', () => {
   resizeHandle.classList.remove('dragging');
   document.body.style.cursor = '';
   document.body.style.userSelect = '';
+  sessionStorage.setItem('sidebarWidth', sidebar.offsetWidth);
   setTimeout(() => map.invalidateSize(), 50);
 });
