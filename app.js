@@ -450,13 +450,20 @@ function buildVideosFeedHtml(visibleIds) {
     groups[group].push(video);
   });
 
-  let html = '';
+  const sections = [];
   TIME_GROUP_ORDER.forEach(groupName => {
     const videos = groups[groupName];
     if (!videos || videos.length === 0) return;
-    html += `<div class="time-group-header">${groupName}</div>`;
-    html += `<div class="video-grid">${videos.map(renderVideoHtml).join('')}</div>`;
+    sections.push({ groupName, videos });
   });
+
+  let html = '<div class="video-feed">';
+  sections.forEach((section, i) => {
+    const isLast = i === sections.length - 1;
+    html += `<div class="time-group-header">${section.groupName}</div>`;
+    html += `<div class="video-grid${isLast ? ' video-grid-last' : ''}">${section.videos.map(renderVideoHtml).join('')}</div>`;
+  });
+  html += '</div>';
 
   return html;
 }
