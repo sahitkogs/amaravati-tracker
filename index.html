@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amaravati Capital Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-brand">
+    <span class="topbar-title">Amaravati Tracker</span>
+    <span class="topbar-subtitle">Capital Construction Monitor</span>
+  </div>
+  <div class="topbar-divider"></div>
+  <div class="filters" id="filters">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="government"><span class="dot" style="background:var(--cat-government)"></span>Government</button>
+    <button class="filter-btn" data-filter="road"><span class="dot" style="background:var(--cat-road)"></span>Roads</button>
+    <button class="filter-btn" data-filter="bridge"><span class="dot" style="background:var(--cat-bridge)"></span>Bridges</button>
+    <button class="filter-btn" data-filter="residential"><span class="dot" style="background:var(--cat-residential)"></span>Residential</button>
+    <button class="filter-btn" data-filter="commercial"><span class="dot" style="background:var(--cat-commercial)"></span>Commercial</button>
+    <button class="filter-btn" data-filter="utility"><span class="dot" style="background:var(--cat-utility)"></span>Utilities</button>
+  </div>
+  <div class="topbar-divider"></div>
+  <div class="layer-toggle">
+    <button class="layer-btn active" data-layer="street">Map</button>
+    <button class="layer-btn" data-layer="satellite">Satellite</button>
+  </div>
+</header>
+
+<div class="main-layout">
+  <div class="map-container">
+    <div id="map"></div>
+  </div>
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>Latest News</h2>
+      <div class="view-info">
+        <span><span class="count" id="visibleCount">0</span> locations in view</span>
+      </div>
+    </div>
+    <div class="sidebar-body" id="sidebarBody"></div>
+  </aside>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
