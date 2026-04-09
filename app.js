@@ -122,15 +122,19 @@ map.on('popupclose', () => {
 });
 
 // ══════════════════════════════════════════════════════════
-//  NEWS FETCHING — Google News RSS via CORS proxy
+//  NEWS FETCHING — via Cloudflare Worker (cached Google News RSS)
 // ══════════════════════════════════════════════════════════
-const CACHE_TTL = 10 * 60 * 1000;
-const PROXY_BASE = 'https://corsproxy.io/?';
+const CACHE_TTL = 2 * 60 * 60 * 1000; // 2 hours client-side
+const IS_PROD = location.hostname === 'sahitkogs.github.io'
+  && location.pathname.startsWith('/amaravati-tracker/');
+const WORKER_BASE = IS_PROD
+  ? 'https://cors-proxy.sahit-koganti.workers.dev'
+  : 'https://cors-proxy-staging.sahit-koganti.workers.dev';
 
-// ── Persistent cache via sessionStorage ──
+// ── Persistent cache via localStorage ──
 function loadCache(key) {
   try {
-    const raw = sessionStorage.getItem(key);
+    const raw = localStorage.getItem(key);
     if (!raw) return new Map();
     const entries = JSON.parse(raw);
     const map = new Map();
@@ -143,45 +147,11 @@ function loadCache(key) {
 
 function saveCache(key, map) {
   try {
-    sessionStorage.setItem(key, JSON.stringify([...map.entries()]));
+    localStorage.setItem(key, JSON.stringify([...map.entries()]));
   } catch {}
 }
 
 const newsCache = loadCache('newsCache');
-
-function buildProxiedRssUrl(keywords) {
-  const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(keywords)}&hl=en-IN&gl=IN&ceid=IN:en`;
-  return PROXY_BASE + encodeURIComponent(rssUrl);
-}
-
-function parseRssXml(xmlText) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(xmlText, 'text/xml');
-  const items = doc.querySelectorAll('item');
-  const articles = [];
-
-  items.forEach((item, i) => {
-    if (i >= 8) return;
-
-    const title = item.querySelector('title')?.textContent || '';
-    const link = item.querySelector('link')?.textContent || '';
-    const pubDate = item.querySelector('pubDate')?.textContent || '';
-    const source = item.querySelector('source')?.textContent || '';
-
-    const descHtml = item.querySelector('description')?.textContent || '';
-    let thumb = '';
-    const imgMatch = descHtml.match(/<img[^>]+src="([^"]+)"/);
-    if (imgMatch) thumb = imgMatch[1];
-
-    const cleanTitle = source && title.endsWith(' - ' + source)
-      ? title.slice(0, -((' - ' + source).length))
-      : title;
-
-    articles.push({ title: cleanTitle, link, pubDate, source, thumb });
-  });
-
-  return articles;
-}
 
 async function fetchNews(keywords) {
   const cached = newsCache.get(keywords);
@@ -189,12 +159,10 @@ async function fetchNews(keywords) {
     return cached.articles;
   }
 
-  const url = buildProxiedRssUrl(keywords);
+  const url = `${WORKER_BASE}/news/search?q=${encodeURIComponent(keywords)}&maxResults=8`;
   const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-
-  const xmlText = await resp.text();
-  const articles = parseRssXml(xmlText);
+  if (!resp.ok) throw new Error(`News Worker ${resp.status}`);
+  const articles = await resp.json();
 
   newsCache.set(keywords, { articles, fetchedAt: Date.now() });
   saveCache('newsCache', newsCache);
@@ -202,68 +170,26 @@ async function fetchNews(keywords) {
 }
 
 // ══════════════════════════════════════════════════════════
-//  YOUTUBE FETCHING — via Invidious API
+//  YOUTUBE FETCHING — via Cloudflare Worker (cached YouTube API)
 // ══════════════════════════════════════════════════════════
 const videoCache = loadCache('videoCache');
 const videosByLoc = new Map();
-const INVIDIOUS_INSTANCES = [
-  'https://vid.puffyan.us',
-  'https://invidious.fdn.fr',
-  'https://y.com.sb',
-  'https://invidious.perennialte.ch'
-];
-
-function parseVideoResults(data) {
-  return data
-    .filter(item => item.type === 'video')
-    .slice(0, 10)
-    .map(v => ({
-      title: v.title,
-      videoId: v.videoId,
-      link: `https://www.youtube.com/watch?v=${v.videoId}`,
-      channel: v.author || '',
-      thumb: v.videoThumbnails?.find(t => t.quality === 'medium')?.url
-        || v.videoThumbnails?.[0]?.url || '',
-      published: v.published ? new Date(v.published * 1000).toISOString() : '',
-      duration: v.lengthSeconds || 0,
-      views: v.viewCount || 0
-    }));
-}
+const VIDEO_CACHE_TTL = 2 * 60 * 60 * 1000; // 2 hours client-side
 
 async function fetchVideos(keywords) {
   const cached = videoCache.get(keywords);
-  if (cached && (Date.now() - cached.fetchedAt) < CACHE_TTL) {
+  if (cached && (Date.now() - cached.fetchedAt) < VIDEO_CACHE_TTL) {
     return cached.videos;
   }
 
-  // Try direct Invidious first, then proxied
-  for (const instance of INVIDIOUS_INSTANCES) {
-    const apiPath = `/api/v1/search?q=${encodeURIComponent(keywords)}&type=video&sort_by=upload_date&region=IN`;
-    const urls = [
-      instance + apiPath,
-      PROXY_BASE + encodeURIComponent(instance + apiPath)
-    ];
+  const url = `${WORKER_BASE}/youtube/search?q=${encodeURIComponent(keywords)}&maxResults=10`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`YouTube Worker ${resp.status}`);
+  const videos = await resp.json();
 
-    for (const url of urls) {
-      try {
-        const resp = await fetch(url);
-        if (!resp.ok) continue;
-        const data = await resp.json();
-        const videos = parseVideoResults(data);
-        if (videos.length > 0) {
-          videoCache.set(keywords, { videos, fetchedAt: Date.now() });
-          saveCache('videoCache', videoCache);
-          return videos;
-        }
-      } catch (e) {
-        continue;
-      }
-    }
-  }
-
-  videoCache.set(keywords, { videos: [], fetchedAt: Date.now() });
+  videoCache.set(keywords, { videos, fetchedAt: Date.now() });
   saveCache('videoCache', videoCache);
-  return [];
+  return videos;
 }
 
 function formatDuration(seconds) {
@@ -459,9 +385,8 @@ function buildVideosFeedHtml(visibleIds) {
 
   let html = '<div class="video-feed">';
   sections.forEach((section, i) => {
-    const isLast = i === sections.length - 1;
     html += `<div class="time-group-header">${section.groupName}</div>`;
-    html += `<div class="video-grid${isLast ? ' video-grid-last' : ''}">${section.videos.map(renderVideoHtml).join('')}</div>`;
+    html += `<div class="video-grid">${section.videos.map(renderVideoHtml).join('')}</div>`;
   });
   html += '</div>';
 

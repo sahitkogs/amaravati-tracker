@@ -1,4 +1,4 @@
-# Sidebar Bottom Gap — Unresolved
+# Sidebar Bottom Gap — Resolved
 
 ## Problem
 
@@ -58,10 +58,15 @@ For YouTube tab, the content is:
 
 3. **overflow-y: auto creates a new BFC** — The sidebar-body's `overflow-y: auto` creates a block formatting context. The `min-height: 100%` on `.video-feed` might not reference the scrollable area's full height.
 
-## Ideas for Next Session
+## Resolution
 
-- **CSS Grid instead of flexbox** for video layout — `grid-template-rows` can fill space more predictably than flex-wrap
-- **Use `align-content: start`** on the video-grid so cards pin to top, then just ensure the container background matches
-- **JavaScript approach** — after render, calculate remaining height and set it as padding-bottom or min-height on the last grid
-- **Accept the gap and mask it** — use a gradient fade-out at the bottom of the sidebar-body instead of trying to fill it
-- **Switch video layout to vertical list** (like articles) instead of a grid — this naturally fills width and avoids the flex-wrap gap issue entirely
+**Root cause:** The `flex: 1` on `.video-grid-last` stretched the last grid container, but `flex-wrap` cards inside pinned to the top — the extra height was empty space inside the grid. Matching backgrounds didn't help because the issue was visual emptiness (no content), not color mismatch.
+
+**Fix applied:**
+1. Removed `.video-grid-last` class and its `flex: 1` CSS rule (ineffective stretch)
+2. Removed `isLast` logic from `app.js` that applied the class
+3. Added `.video-feed::after` pseudo-element with `flex: 1` and a gradient from `--bg-surface` to `--bg-deep`
+
+**How it works:** The `.video-feed` keeps `min-height: 100%` so it fills the sidebar-body. The `::after` with `flex: 1` grows to fill any remaining space below the last grid. Its gradient creates a smooth visual fade to the page background, making the end of content look intentional.
+
+**When content overflows** (enough videos to scroll), the `::after` gets 0 height and is invisible — no visual impact on scrollable content.

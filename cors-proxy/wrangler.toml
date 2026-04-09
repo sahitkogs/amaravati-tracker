@@ -1,0 +1,11 @@
+name = "cors-proxy"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# Production: cors-proxy.sahit-koganti.workers.dev
+# Deploy with: wrangler deploy
+
+# Staging: cors-proxy-staging.sahit-koganti.workers.dev
+# Deploy with: wrangler deploy --env staging
+[env.staging]
+name = "cors-proxy-staging"
