@@ -306,16 +306,16 @@ body {
   box-shadow: 0 4px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.15);
 }
 
-/* ── Sidebar Drag Handle (mobile only) ── */
+/* ── Sidebar Drag Zone (mobile only) ── */
+.sidebar-drag-zone {
+  flex-shrink: 0;
+}
+
 .sidebar-drag-handle {
   display: none;
   justify-content: center;
-  padding: 8px 0 4px;
-  cursor: grab;
-  touch-action: none;
+  padding: 8px 0 0;
 }
-
-.sidebar-drag-handle:active { cursor: grabbing; }
 
 .drag-bar {
   width: 36px;
@@ -551,6 +551,18 @@ body {
     border-top: 1px solid var(--border);
     border-radius: 16px 16px 0 0;
     transition: height 0.3s ease;
+  }
+
+  .sidebar-drag-zone {
+    cursor: grab;
+    touch-action: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-drag-zone:active { cursor: grabbing; }
+
+  .sidebar-drag-zone .sidebar-header {
+    border-bottom: none;
   }
 
   .sidebar-drag-handle {
