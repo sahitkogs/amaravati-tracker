@@ -1,16 +1,22 @@
 # Amaravati Capital Tracker
 
-An interactive map that tracks construction and infrastructure progress in Amaravati, Andhra Pradesh's capital region. The sidebar displays live Google News articles for locations visible in the current map viewport.
+An interactive map tracking construction and infrastructure progress in Amaravati, Andhra Pradesh's capital region. A live Google News feed updates automatically based on the visible map area — pan and zoom to discover news for different locations.
 
-![Screenshot](tests/images/screenshot-final.png)
+**Live site:** https://sahitkogs.github.io/amaravati-tracker/
+
+![Screenshot](tests/images/screenshot-unified-feed.png)
+![Sidebar Detail](tests/images/screenshot-sidebar-feed.png)
 
 ## Features
 
 - **Interactive map** with 20 tracked construction/infrastructure locations
-- **Live news feed** — fetches real Google News articles per location via RSS
+- **Live news feed** — fetches real Google News articles via RSS, sorted chronologically
+- **Time-grouped** — articles grouped by Today, This Week, This Month, Older
+- **Location tags** — each article is tagged with its construction project (color-coded by category)
+- **Deduplication** — same article appearing across multiple location searches is shown once
 - **Viewport-driven** — sidebar updates automatically as you pan and zoom
 - **Category filters** — Government, Roads, Bridges, Residential, Commercial, Utilities
-- **Map/Satellite toggle** — switch between CartoDB dark tiles and Esri satellite imagery
+- **Map/Satellite toggle** — CartoDB dark tiles and Esri satellite imagery
 - **Mobile responsive** — map stacks above sidebar on small screens
 
 ## Tech Stack
@@ -40,12 +46,13 @@ Then open `http://localhost:3000` (or whichever port is shown).
 ## File Structure
 
 ```
-index.html      — HTML skeleton, loads all dependencies
-styles.css      — All CSS (layout, sidebar, markers, responsive)
-data.js         — Location data array + config constants (categories, statuses)
-app.js          — Map init, markers, news fetching, sidebar rendering, filters
-plans/          — Implementation plan docs
-tests/images/   — Playwright test screenshots
+index.html          — HTML skeleton, loads all dependencies
+styles.css          — All CSS (layout, sidebar, markers, responsive)
+data.js             — Location data array + config constants
+app.js              — Map init, markers, news fetching, sidebar rendering, filters
+deliverable/        — Single-file build for distribution
+plans/              — Implementation plan docs
+tests/images/       — Playwright test screenshots
 ```
 
 ## Adding Locations
@@ -69,11 +76,11 @@ Edit `data.js` and add an entry to the `LOCATIONS` array:
 
 Tip: search your `searchKeywords` on [Google News](https://news.google.com) first to verify they return relevant results.
 
-## Building for Distribution
+## Hosting
 
-To produce a single shareable HTML file, inline all CSS and JS back into `index.html`. The plan is to do this at the end when ready to deploy.
+The site is hosted on GitHub Pages. Any push to `main` triggers a rebuild.
 
-Hosting options: GitHub Pages, Cloudflare Pages, Netlify — just upload the single file.
+The `deliverable/` folder contains a single merged HTML file for sharing, but note that news fetching requires HTTP hosting — it won't work when opened directly from `file://`.
 
 ## License
 
