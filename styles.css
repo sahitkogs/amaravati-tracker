@@ -388,6 +388,62 @@ body.day-mode .news-article:hover .news-article-title {
   box-shadow: 0 4px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.15);
 }
 
+/* ── Map Popup ── */
+.custom-popup .leaflet-popup-content-wrapper {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  padding: 0;
+}
+
+.custom-popup .leaflet-popup-content {
+  margin: 0;
+}
+
+.custom-popup .leaflet-popup-tip {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-left: none;
+}
+
+.map-popup {
+  padding: 12px 14px;
+}
+
+.map-popup-name {
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-bottom: 2px;
+}
+
+.map-popup-local {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.map-popup-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.map-popup-sep {
+  color: var(--text-muted);
+}
+
+.map-popup-desc {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
 /* ── Sidebar Drag Zone (mobile only) ── */
 .sidebar-drag-zone {
   flex-shrink: 0;

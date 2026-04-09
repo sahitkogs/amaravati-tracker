@@ -78,6 +78,29 @@ LOCATIONS.forEach(loc => {
     iconAnchor: [size / 2, size / 2]
   });
   const marker = L.marker([loc.lat, loc.lng], { icon }).addTo(layerGroups[loc.category]);
+
+  const catLabel = CATEGORY_LABELS[loc.category];
+  const catColor = CATEGORY_COLORS[loc.category];
+  const statusCfg = STATUS_CONFIG[loc.status];
+  const popupContent = `
+    <div class="map-popup">
+      <div class="map-popup-name">${loc.name}</div>
+      ${loc.nameLocal ? `<div class="map-popup-local">${loc.nameLocal}</div>` : ''}
+      <div class="map-popup-meta">
+        <span class="map-popup-cat" style="color:${catColor};">${catLabel}</span>
+        <span class="map-popup-sep">&middot;</span>
+        <span class="map-popup-status" style="color:${statusCfg.color};">${statusCfg.label}</span>
+      </div>
+      <div class="map-popup-desc">${loc.description}</div>
+    </div>
+  `;
+
+  marker.bindPopup(popupContent, {
+    className: 'custom-popup',
+    maxWidth: 260,
+    closeButton: false
+  });
+
   marker.on('click', () => {
     map.setView([loc.lat, loc.lng], Math.max(map.getZoom(), 14), { animate: true });
   });
