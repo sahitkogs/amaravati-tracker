@@ -154,43 +154,53 @@ const INVIDIOUS_INSTANCES = [
   'https://invidious.perennialte.ch'
 ];
 
+function parseVideoResults(data) {
+  return data
+    .filter(item => item.type === 'video')
+    .slice(0, 6)
+    .map(v => ({
+      title: v.title,
+      videoId: v.videoId,
+      link: `https://www.youtube.com/watch?v=${v.videoId}`,
+      channel: v.author || '',
+      thumb: v.videoThumbnails?.find(t => t.quality === 'medium')?.url
+        || v.videoThumbnails?.[0]?.url || '',
+      published: v.published ? new Date(v.published * 1000).toISOString() : '',
+      duration: v.lengthSeconds || 0,
+      views: v.viewCount || 0
+    }));
+}
+
 async function fetchVideos(keywords) {
   const cached = videoCache.get(keywords);
   if (cached && (Date.now() - cached.fetchedAt) < CACHE_TTL) {
     return cached.videos;
   }
 
-  // Try each Invidious instance
+  // Try direct Invidious first, then proxied
   for (const instance of INVIDIOUS_INSTANCES) {
-    try {
-      const url = `${instance}/api/v1/search?q=${encodeURIComponent(keywords)}&type=video&sort_by=upload_date&region=IN`;
-      const resp = await fetch(url);
-      if (!resp.ok) continue;
-      const data = await resp.json();
+    const apiPath = `/api/v1/search?q=${encodeURIComponent(keywords)}&type=video&sort_by=upload_date&region=IN`;
+    const urls = [
+      instance + apiPath,
+      PROXY_BASE + encodeURIComponent(instance + apiPath)
+    ];
 
-      const videos = data
-        .filter(item => item.type === 'video')
-        .slice(0, 5)
-        .map(v => ({
-          title: v.title,
-          videoId: v.videoId,
-          link: `https://www.youtube.com/watch?v=${v.videoId}`,
-          channel: v.author || '',
-          thumb: v.videoThumbnails?.find(t => t.quality === 'medium')?.url
-            || v.videoThumbnails?.[0]?.url || '',
-          published: v.published ? new Date(v.published * 1000).toISOString() : '',
-          duration: v.lengthSeconds || 0,
-          views: v.viewCount || 0
-        }));
-
-      videoCache.set(keywords, { videos, fetchedAt: Date.now() });
-      return videos;
-    } catch (e) {
-      continue;
+    for (const url of urls) {
+      try {
+        const resp = await fetch(url);
+        if (!resp.ok) continue;
+        const data = await resp.json();
+        const videos = parseVideoResults(data);
+        if (videos.length > 0) {
+          videoCache.set(keywords, { videos, fetchedAt: Date.now() });
+          return videos;
+        }
+      } catch (e) {
+        continue;
+      }
     }
   }
 
-  // Fallback: return empty
   videoCache.set(keywords, { videos: [], fetchedAt: Date.now() });
   return [];
 }
@@ -365,7 +375,25 @@ function buildVideosFeedHtml(visibleIds) {
   // Sort newest first
   unique.sort((a, b) => new Date(b.published || 0) - new Date(a.published || 0));
 
-  return unique.map(renderVideoHtml).join('');
+  if (unique.length === 0) return '';
+
+  // Group by time period
+  const groups = {};
+  unique.forEach(video => {
+    const group = getTimeGroup(video.published || '2000-01-01');
+    if (!groups[group]) groups[group] = [];
+    groups[group].push(video);
+  });
+
+  let html = '';
+  TIME_GROUP_ORDER.forEach(groupName => {
+    const videos = groups[groupName];
+    if (!videos || videos.length === 0) return;
+    html += `<div class="time-group-header">${groupName}</div>`;
+    html += `<div class="video-grid">${videos.map(renderVideoHtml).join('')}</div>`;
+  });
+
+  return html;
 }
 
 // ── Unified render ──
@@ -643,3 +671,37 @@ document.addEventListener('mousemove', (e) => {
 });
 
 document.addEventListener('mouseup', onDragEnd);
+
+// ══════════════════════════════════════════════════════════
+//  SIDEBAR HORIZONTAL RESIZE (desktop)
+// ══════════════════════════════════════════════════════════
+const resizeHandle = document.getElementById('sidebarResizeHandle');
+let hDragging = false;
+let hDragStartX = 0;
+let hDragStartWidth = 0;
+
+resizeHandle.addEventListener('mousedown', (e) => {
+  hDragging = true;
+  hDragStartX = e.clientX;
+  hDragStartWidth = sidebar.offsetWidth;
+  resizeHandle.classList.add('dragging');
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+  e.preventDefault();
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!hDragging) return;
+  const delta = hDragStartX - e.clientX;
+  const newWidth = Math.max(320, Math.min(window.innerWidth * 0.7, hDragStartWidth + delta));
+  sidebar.style.width = newWidth + 'px';
+});
+
+document.addEventListener('mouseup', () => {
+  if (!hDragging) return;
+  hDragging = false;
+  resizeHandle.classList.remove('dragging');
+  document.body.style.cursor = '';
+  document.body.style.userSelect = '';
+  setTimeout(() => map.invalidateSize(), 50);
+});

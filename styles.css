@@ -23,7 +23,7 @@
   --status-construction: #e0943a;
   --status-planned: #4a9eda;
   --status-stalled: #e05555;
-  --sidebar-width: 380px;
+  --sidebar-width: 700px;
   --topbar-height: 56px;
   --radius: 8px;
   --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -406,16 +406,33 @@ body.day-mode .news-article:hover .news-article-title {
   background: var(--border-light);
 }
 
+/* ── Sidebar Horizontal Resize (desktop) ── */
+.sidebar-resize-handle {
+  width: 5px;
+  cursor: col-resize;
+  background: transparent;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+  transition: background 0.2s;
+}
+
+.sidebar-resize-handle:hover,
+.sidebar-resize-handle.dragging {
+  background: var(--accent-gold-dim);
+}
+
 /* ── Sidebar (always visible) ── */
 .sidebar {
   width: var(--sidebar-width);
   height: 100%;
   background: var(--bg-surface);
-  border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   overflow: hidden;
+  min-width: 320px;
+  max-width: 70vw;
 }
 
 .sidebar-header {
@@ -650,22 +667,25 @@ body.day-mode .news-article:hover .news-article-title {
   border-bottom: none;
 }
 
-/* ── YouTube Video Card ── */
+/* ── YouTube Video Grid ── */
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 12px 16px;
+}
+
 .video-card {
   display: block;
-  padding: 12px 16px;
   text-decoration: none;
   color: inherit;
-  border-bottom: 1px solid var(--border);
+  border-radius: var(--radius);
   transition: background var(--transition);
+  padding: 8px;
 }
 
 .video-card:hover {
   background: var(--bg-elevated);
-}
-
-.video-card:last-child {
-  border-bottom: none;
 }
 
 .video-card-thumb {
@@ -776,5 +796,20 @@ body.day-mode .news-article:hover .news-article-title {
 
   .sidebar-drag-handle {
     display: flex;
+  }
+
+  .sidebar-resize-handle {
+    display: none;
+  }
+
+  .sidebar {
+    max-width: 100%;
+    min-width: 100%;
+  }
+
+  .video-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 8px 12px;
   }
 }
