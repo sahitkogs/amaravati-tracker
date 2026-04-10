@@ -389,17 +389,17 @@ body.day-mode .news-article:hover .news-article-title {
   box-shadow: 0 4px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.15);
 }
 
-/* ── Map Tooltip ── */
+/* ── Map Tooltip (matches popup styling) ── */
 .marker-tooltip {
   background: var(--bg-surface);
   color: var(--text-primary);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 4px 8px;
+  border-radius: var(--radius);
+  padding: 0;
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  font-size: 0.72rem;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  max-width: 260px;
+  white-space: normal;
 }
 .marker-tooltip::before {
   border-top-color: var(--border);
