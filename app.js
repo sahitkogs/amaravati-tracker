@@ -60,6 +60,15 @@ document.querySelector('[data-layer="satellite"]').addEventListener('click', fun
 });
 
 // ══════════════════════════════════════════════════════════
+//  UTILITIES
+// ══════════════════════════════════════════════════════════
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ══════════════════════════════════════════════════════════
 //  USER LOCATIONS — localStorage persistence
 // ══════════════════════════════════════════════════════════
 const MAX_POINTS = 10;
@@ -68,12 +77,19 @@ const MARKER_COLOR = '#d4a857';
 function loadUserLocations() {
   try {
     const raw = localStorage.getItem('userLocations');
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(l => l && typeof l.id === 'string' && typeof l.lat === 'number' && typeof l.lng === 'number');
   } catch { return []; }
 }
 
 function saveUserLocations(locs) {
-  localStorage.setItem('userLocations', JSON.stringify(locs));
+  try {
+    localStorage.setItem('userLocations', JSON.stringify(locs));
+  } catch {
+    // Storage full or blocked
+  }
 }
 
 let userLocations = loadUserLocations();
@@ -96,13 +112,13 @@ function createMarker(loc) {
 
   const popupContent = `
     <div class="map-popup">
-      <div class="map-popup-name">${loc.name}</div>
-      <div class="map-popup-desc">${loc.searchKeywords}</div>
+      <div class="map-popup-name">${escapeHtml(loc.name)}</div>
+      <div class="map-popup-desc">${escapeHtml(loc.searchKeywords)}</div>
       <button class="remove-point-btn" data-loc-id="${loc.id}">Remove</button>
     </div>
   `;
 
-  marker.bindTooltip(loc.name, {
+  marker.bindTooltip(escapeHtml(loc.name), {
     direction: 'top',
     offset: [0, -8],
     className: 'marker-tooltip',
@@ -345,7 +361,7 @@ function renderArticleHtml(article) {
         <div class="news-article-title">${article.title}</div>
         <span class="news-article-tag" style="background:${tagColor}18;color:${tagColor};">
           <span class="news-article-tag-dot" style="background:${tagColor};"></span>
-          ${article._loc.name}
+          ${escapeHtml(article._loc.name)}
         </span>
       </div>
       ${thumbHtml}
@@ -407,7 +423,7 @@ function renderVideoHtml(video) {
       </div>
       <span class="news-article-tag" style="background:${tagColor}18;color:${tagColor};">
         <span class="news-article-tag-dot" style="background:${tagColor};"></span>
-        ${video._loc.name}
+        ${escapeHtml(video._loc.name)}
       </span>
     </a>
   `;
