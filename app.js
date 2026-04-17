@@ -294,7 +294,7 @@ function showConfirmationPanel(location) {
 // ══════════════════════════════════════════════════════════
 const CACHE_TTL = 2 * 60 * 60 * 1000; // 2 hours client-side
 const IS_PROD = location.hostname === 'sahitkogs.github.io'
-  && location.pathname.startsWith('/amaravati-tracker/');
+  && location.pathname.startsWith('/news-map/');
 const WORKER_BASE = IS_PROD
   ? 'https://cors-proxy.sahit-koganti.workers.dev'
   : 'https://cors-proxy-staging.sahit-koganti.workers.dev';

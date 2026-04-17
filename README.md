@@ -1,9 +1,9 @@
-# Amaravati Capital Tracker
+# News Map
 
-An interactive map tracking construction and infrastructure progress in Amaravati, Andhra Pradesh's capital region. Live news and YouTube feeds update automatically based on the visible map area — pan and zoom to discover content for different locations.
+An interactive map where users search for any place in the world, add it as a point, and see live news and YouTube feeds for those locations. User points are stored in localStorage and persist across sessions.
 
-**Production:** https://sahitkogs.github.io/amaravati-tracker/
-**Staging:** https://sahitkogs.github.io/amaravati-tracker-staging/
+**Production:** https://sahitkogs.github.io/news-map/
+**Staging:** https://sahitkogs.github.io/news-map-staging/
 
 ![Screenshot](tests/images/screenshot-unified-feed.png)
 ![Sidebar Detail](tests/images/screenshot-sidebar-feed.png)
@@ -94,7 +94,7 @@ Both news and YouTube use the same three-layer cache:
 
 | | Staging | Production |
 |---|---|---|
-| **Site** | [amaravati-tracker-staging](https://sahitkogs.github.io/amaravati-tracker-staging/) | [amaravati-tracker](https://sahitkogs.github.io/amaravati-tracker/) |
+| **Site** | [news-map-staging](https://sahitkogs.github.io/news-map-staging/) | [news-map](https://sahitkogs.github.io/news-map/) |
 | **Worker** | `cors-proxy-staging.sahit-koganti.workers.dev` | `cors-proxy.sahit-koganti.workers.dev` |
 | **Git remote** | `staging` | `prod` |
 | **Edge cache** | Separate | Separate |

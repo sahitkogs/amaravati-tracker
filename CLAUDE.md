@@ -56,7 +56,7 @@ The client never talks to Google or YouTube directly. Both `/news/search` and `/
 
 | Site | Hostname/path | Worker |
 |---|---|---|
-| Production | `sahitkogs.github.io/amaravati-tracker/` | `cors-proxy.sahit-koganti.workers.dev` |
+| Production | `sahitkogs.github.io/news-map/` | `cors-proxy.sahit-koganti.workers.dev` |
 | Staging | anything else (incl. localhost) | `cors-proxy-staging.sahit-koganti.workers.dev` |
 
 Local dev hits the staging Worker — safe to break, separate edge cache, separate metrics.
