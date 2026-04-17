@@ -13,26 +13,20 @@ Vanilla HTML/CSS/JS static site (no build step, no framework). An interactive Le
 python -m http.server 8766
 # then open http://localhost:8766/index.html
 
-# Deploy site to STAGING (default workflow)
-git push staging main
+# Deploy site
+git push origin main
 
-# Deploy site to PRODUCTION (only when explicitly requested)
-git push prod main
-
-# Deploy Worker to staging
-cd cors-proxy && wrangler deploy --env staging
-
-# Deploy Worker to production
+# Deploy Worker
 cd cors-proxy && wrangler deploy
 
 # Edge cache tests (validates Worker X-Cache HIT/MISS behavior)
-bash tests/cache-tests.sh staging       # or "prod"
+bash tests/cache-tests.sh prod
 
 # Client-side cache tests (validates localStorage behavior, requires playwright)
 node tests/client-cache-test.js http://localhost:8766/index.html
 ```
 
-**Default git remote is `staging`.** Never push to `prod` unless the user explicitly says so. Each environment has its own GitHub repo (GitHub Pages allows only one Pages site per repo) and its own Cloudflare Worker.
+**Single repo:** `sahitkogs/news-map` with remote `origin`.
 
 ## Architecture
 
@@ -57,9 +51,9 @@ The client never talks to Google or YouTube directly. Both `/news/search` and `/
 | Site | Hostname/path | Worker |
 |---|---|---|
 | Production | `sahitkogs.github.io/news-map/` | `cors-proxy.sahit-koganti.workers.dev` |
-| Staging | anything else (incl. localhost) | `cors-proxy-staging.sahit-koganti.workers.dev` |
+| Local dev | anything else (incl. localhost) | `cors-proxy-staging.sahit-koganti.workers.dev` |
 
-Local dev hits the staging Worker — safe to break, separate edge cache, separate metrics.
+Local dev hits the staging Worker — separate edge cache, safe to experiment.
 
 ### Sidebar rendering
 
