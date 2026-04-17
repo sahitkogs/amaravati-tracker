@@ -22,8 +22,8 @@ const tileLayers = {
   })
 };
 
-tileLayers.satellite.addTo(map);
-let currentTileLayer = 'satellite';
+tileLayers.night.addTo(map);
+let currentTileLayer = 'night';
 let isDay = false;
 
 function switchTileLayer(layer) {
@@ -171,7 +171,25 @@ function addLocation(loc) {
 function updatePointCounter() {
   const el = document.getElementById('pointCounter');
   if (el) el.textContent = `${userLocations.length} / ${MAX_POINTS} points`;
+  updateHelpOverlay();
 }
+
+// ── Help overlay (shown when no points exist and not dismissed this session) ──
+function updateHelpOverlay() {
+  const overlay = document.getElementById('helpOverlay');
+  if (!overlay) return;
+  const dismissed = sessionStorage.getItem('helpDismissed') === '1';
+  const shouldShow = userLocations.length === 0 && !dismissed;
+  overlay.hidden = !shouldShow;
+}
+
+function dismissHelpOverlay() {
+  sessionStorage.setItem('helpDismissed', '1');
+  updateHelpOverlay();
+}
+
+document.getElementById('helpClose')?.addEventListener('click', dismissHelpOverlay);
+document.getElementById('helpGotIt')?.addEventListener('click', dismissHelpOverlay);
 
 // Handle remove button clicks inside popups (event delegation)
 map.on('popupopen', (e) => {

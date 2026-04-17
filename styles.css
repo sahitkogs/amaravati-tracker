@@ -1046,3 +1046,121 @@ body.day-mode .leaflet-control-geocoder-icon {
     width: 100%;
   }
 }
+
+/* ── Help / Onboarding Overlay ── */
+.help-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(440px, calc(100% - 48px));
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 22px 24px 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+  z-index: 500;
+  color: var(--text-primary);
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  animation: helpFadeIn 0.4s ease;
+}
+
+body.day-mode .help-overlay {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes helpFadeIn {
+  from { opacity: 0; transform: translate(-50%, -48%); }
+  to   { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+.help-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: color 0.2s, background 0.2s;
+}
+
+.help-close:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.help-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.35rem;
+  color: var(--accent-gold);
+  margin-bottom: 4px;
+}
+
+.help-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.help-tips {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.help-tips li {
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--text-primary);
+  padding-left: 0;
+}
+
+.help-key {
+  display: inline-block;
+  background: var(--accent-gold-glow);
+  color: var(--accent-gold);
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-right: 8px;
+  vertical-align: 1px;
+}
+
+.help-got-it {
+  display: block;
+  width: 100%;
+  background: var(--accent-gold);
+  color: #1a1a1a;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.help-got-it:hover {
+  background: var(--accent-gold-dim);
+  color: #fff;
+}
+
+@media (max-width: 720px) {
+  .help-overlay {
+    padding: 18px 18px 16px;
+  }
+  .help-title { font-size: 1.15rem; }
+  .help-tips li { font-size: 0.8rem; }
+}
