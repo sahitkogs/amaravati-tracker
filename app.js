@@ -198,7 +198,7 @@ userLocations.forEach(createMarker);
 updatePointCounter();
 
 // ══════════════════════════════════════════════════════════
-//  GEOCODER — placeholder, wired up in next task
+//  GEOCODER — search bar + confirmation panel
 // ══════════════════════════════════════════════════════════
 let pendingLocation = null;
 let tempMarker = null;
@@ -206,6 +206,86 @@ let tempMarker = null;
 function cancelPending() {
   if (tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
   pendingLocation = null;
+}
+
+const geocoderControl = L.Control.geocoder({
+  geocoder: L.Control.Geocoder.nominatim(),
+  placeholder: 'Search for a place...',
+  defaultMarkGeocode: false,
+  position: 'topleft',
+  collapsed: false
+}).addTo(map);
+
+geocoderControl.on('markgeocode', (e) => {
+  const { center, name } = e.geocode;
+
+  // Clean up any previous pending state
+  cancelPending();
+  if (selectedLocation) {
+    selectedLocation = null;
+    map.closePopup();
+  }
+
+  // Place temporary marker
+  tempMarker = L.marker(center, {
+    icon: L.divIcon({
+      className: '',
+      html: '<div class="marker-icon temp-marker" style="width:14px;height:14px;background:#4a9eda;"></div>',
+      iconSize: [14, 14],
+      iconAnchor: [7, 7]
+    })
+  }).addTo(map);
+
+  map.setView(center, Math.max(map.getZoom(), 12), { animate: true });
+
+  pendingLocation = { name, lat: center.lat, lng: center.lng };
+  showConfirmationPanel(pendingLocation);
+});
+
+function showConfirmationPanel(location) {
+  const atLimit = userLocations.length >= MAX_POINTS;
+  sidebarBody.innerHTML = `
+    <div class="confirmation-panel">
+      <div class="confirmation-label">Add new point</div>
+      <div class="confirmation-name">${escapeHtml(location.name)}</div>
+      <div class="confirmation-coords">${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}</div>
+      <label class="confirmation-field-label">Search keywords for news &amp; videos:</label>
+      <input type="text" class="confirmation-input" id="keywordsInput" value="${escapeHtml(location.name)}">
+      <div class="confirmation-counter">${userLocations.length} / ${MAX_POINTS} points</div>
+      ${atLimit ? '<div class="confirmation-limit">You\'ve reached the 10-point limit. Remove a point to add a new one.</div>' : ''}
+      <div class="confirmation-actions">
+        <button class="confirmation-btn add" id="confirmAdd" ${atLimit ? 'disabled' : ''}>Add Point</button>
+        <button class="confirmation-btn cancel" id="confirmCancel">Cancel</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('confirmAdd').addEventListener('click', () => {
+    const keywords = document.getElementById('keywordsInput').value.trim();
+    if (!keywords || userLocations.length >= MAX_POINTS) return;
+
+    const loc = {
+      id: 'user_' + Date.now(),
+      name: location.name,
+      lat: location.lat,
+      lng: location.lng,
+      searchKeywords: keywords,
+      addedAt: Date.now()
+    };
+
+    cancelPending();
+    addLocation(loc);
+    selectedLocation = loc;
+    lastVisibleIdsByTab.articles = '';
+    lastVisibleIdsByTab.videos = '';
+    renderSidebar(true);
+    map.setView([loc.lat, loc.lng], Math.max(map.getZoom(), 14), { animate: true });
+  });
+
+  document.getElementById('confirmCancel').addEventListener('click', () => {
+    cancelPending();
+    renderSidebar(true);
+  });
 }
 
 // ══════════════════════════════════════════════════════════
