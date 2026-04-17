@@ -1047,120 +1047,144 @@ body.day-mode .leaflet-control-geocoder-icon {
   }
 }
 
-/* ── Help / Onboarding Overlay ── */
-.help-overlay {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: min(440px, calc(100% - 48px));
+/* ── Tutorial Callout (guided onboarding) ── */
+.tutorial-callout {
+  position: fixed;
+  z-index: 2000;
+  width: 300px;
+  max-width: calc(100vw - 32px);
   background: var(--bg-surface);
   border: 1px solid var(--border-light);
-  border-radius: 12px;
-  padding: 22px 24px 20px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
-  z-index: 500;
+  border-radius: 10px;
+  padding: 14px 16px 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   color: var(--text-primary);
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  animation: helpFadeIn 0.4s ease;
+  animation: tutorialFadeIn 0.25s ease;
+  pointer-events: auto;
 }
 
-body.day-mode .help-overlay {
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+body.day-mode .tutorial-callout {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.18);
 }
 
-@keyframes helpFadeIn {
-  from { opacity: 0; transform: translate(-50%, -48%); }
-  to   { opacity: 1; transform: translate(-50%, -50%); }
+@keyframes tutorialFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
-.help-close {
+.tutorial-callout::before {
+  content: '';
   position: absolute;
-  top: 8px;
-  right: 10px;
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  font-size: 1.4rem;
-  line-height: 1;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: color 0.2s, background 0.2s;
+  width: 12px; height: 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  transform: rotate(45deg);
+  z-index: -1;
 }
 
-.help-close:hover {
-  color: var(--text-primary);
-  background: var(--bg-hover);
-}
+.tutorial-callout.arrow-top::before    { top: -7px;    left: 50%; margin-left: -6px; }
+.tutorial-callout.arrow-bottom::before { bottom: -7px; left: 50%; margin-left: -6px; }
+.tutorial-callout.arrow-left::before   { left: -7px;   top: 50%;  margin-top: -6px; }
+.tutorial-callout.arrow-right::before  { right: -7px;  top: 50%;  margin-top: -6px; }
 
-.help-title {
-  font-family: 'DM Serif Display', serif;
-  font-size: 1.35rem;
+.tutorial-step-num {
+  font-size: 0.68rem;
   color: var(--accent-gold);
-  margin-bottom: 4px;
-}
-
-.help-subtitle {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  margin-bottom: 16px;
-}
-
-.help-tips {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.help-tips li {
-  font-size: 0.85rem;
-  line-height: 1.45;
-  color: var(--text-primary);
-  padding-left: 0;
-}
-
-.help-key {
-  display: inline-block;
-  background: var(--accent-gold-glow);
-  color: var(--accent-gold);
-  font-weight: 600;
-  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 2px 8px;
-  border-radius: 4px;
-  margin-right: 8px;
-  vertical-align: 1px;
+  margin-bottom: 6px;
 }
 
-.help-got-it {
-  display: block;
-  width: 100%;
+.tutorial-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.tutorial-body {
+  font-size: 0.83rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.tutorial-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tutorial-nav {
+  display: flex;
+  gap: 6px;
+}
+
+.tutorial-callout button {
+  font-family: inherit;
+  font-size: 0.78rem;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.2s, color 0.2s, opacity 0.2s;
+}
+
+.tutorial-skip {
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.tutorial-skip:hover {
+  color: var(--text-primary);
+}
+
+.tutorial-prev {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+.tutorial-prev:hover:not(:disabled) {
+  background: var(--bg-elevated);
+}
+
+.tutorial-prev:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.tutorial-next {
   background: var(--accent-gold);
   color: #1a1a1a;
-  border: none;
-  border-radius: 6px;
-  padding: 10px 16px;
-  font-family: inherit;
-  font-size: 0.9rem;
   font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
 }
 
-.help-got-it:hover {
+.tutorial-next:hover {
   background: var(--accent-gold-dim);
   color: #fff;
 }
 
+/* Pulsing gold ring on the target element during a tutorial step */
+.tutorial-target-highlight {
+  box-shadow: 0 0 0 3px var(--accent-gold), 0 0 0 8px var(--accent-gold-glow) !important;
+  border-radius: 6px;
+  animation: tutorialPulse 1.8s ease-in-out infinite;
+  transition: box-shadow 0.2s;
+}
+
+@keyframes tutorialPulse {
+  0%, 100% { box-shadow: 0 0 0 3px var(--accent-gold), 0 0 0 8px var(--accent-gold-glow); }
+  50%      { box-shadow: 0 0 0 3px var(--accent-gold), 0 0 0 14px rgba(212, 168, 87, 0.06); }
+}
+
 @media (max-width: 720px) {
-  .help-overlay {
-    padding: 18px 18px 16px;
+  .tutorial-callout {
+    width: calc(100vw - 24px);
   }
-  .help-title { font-size: 1.15rem; }
-  .help-tips li { font-size: 0.8rem; }
+  .tutorial-title { font-size: 0.95rem; }
+  .tutorial-body  { font-size: 0.78rem; }
 }

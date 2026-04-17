@@ -33,19 +33,6 @@
   <div class="map-container">
     <div id="map"></div>
     <button class="home-btn" id="homeBtn" title="Reset view">&#8962;</button>
-    <div class="help-overlay" id="helpOverlay" hidden>
-      <button class="help-close" id="helpClose" aria-label="Dismiss help">&times;</button>
-      <div class="help-title">Welcome to News Map</div>
-      <div class="help-subtitle">Track news &amp; videos for any place in the world</div>
-      <ul class="help-tips">
-        <li><span class="help-key">Search</span> Use the search bar (top-left of map) to find a place, then add it as a point.</li>
-        <li><span class="help-key">10 points</span> Add up to 10 locations &mdash; the counter (top-right) tracks usage.</li>
-        <li><span class="help-key">Views</span> Toggle day/night with the moon icon, or enable Satellite imagery.</li>
-        <li><span class="help-key">Sidebar</span> Articles &amp; YouTube videos for visible points appear on the right, grouped by date.</li>
-        <li><span class="help-key">Manage</span> Click a marker to view details or remove the point.</li>
-      </ul>
-      <button class="help-got-it" id="helpGotIt">Got it</button>
-    </div>
   </div>
   <div class="sidebar-resize-handle" id="sidebarResizeHandle"></div>
   <aside class="sidebar" id="sidebar">
@@ -66,6 +53,19 @@
     </div>
     <div class="sidebar-body" id="sidebarBody"></div>
   </aside>
+</div>
+
+<div class="tutorial-callout" id="tutorialCallout" hidden>
+  <div class="tutorial-step-num" id="tutorialStepNum"></div>
+  <div class="tutorial-title" id="tutorialTitle"></div>
+  <div class="tutorial-body" id="tutorialBody"></div>
+  <div class="tutorial-actions">
+    <button class="tutorial-skip" id="tutorialSkip">Skip tour</button>
+    <div class="tutorial-nav">
+      <button class="tutorial-prev" id="tutorialPrev">Back</button>
+      <button class="tutorial-next" id="tutorialNext">Next</button>
+    </div>
+  </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

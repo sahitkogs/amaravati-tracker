@@ -171,25 +171,127 @@ function addLocation(loc) {
 function updatePointCounter() {
   const el = document.getElementById('pointCounter');
   if (el) el.textContent = `${userLocations.length} / ${MAX_POINTS} points`;
-  updateHelpOverlay();
 }
 
-// ── Help overlay (shown when no points exist and not dismissed this session) ──
-function updateHelpOverlay() {
-  const overlay = document.getElementById('helpOverlay');
-  if (!overlay) return;
-  const dismissed = sessionStorage.getItem('helpDismissed') === '1';
-  const shouldShow = userLocations.length === 0 && !dismissed;
-  overlay.hidden = !shouldShow;
+// ── Guided tutorial (step-by-step tour for new users) ──
+const TUTORIAL_STEPS = [
+  { selector: '.leaflet-control-geocoder', placement: 'right',
+    title: 'Search for a place',
+    body: 'Type any city, landmark, or address. Pick a result to preview it, then add it as a point.' },
+  { selector: '#pointCounter', placement: 'bottom',
+    title: 'Your points',
+    body: 'Add up to 10 locations. This counter shows how many you have placed.' },
+  { selector: '#themeToggle', placement: 'bottom',
+    title: 'Day or night',
+    body: 'Switch between light and dark map themes at any time.' },
+  { selector: '[data-layer="satellite"]', placement: 'bottom',
+    title: 'Satellite view',
+    body: 'Swap to real-world satellite imagery with one click.' },
+  { selector: '#sidebar', placement: 'left',
+    title: 'News & videos',
+    body: 'Articles and YouTube videos for the points in your current view appear here, grouped by date.' }
+];
+
+let tutorialStep = -1;
+let tutorialHighlight = null;
+
+function startTutorial() {
+  if (sessionStorage.getItem('tutorialDismissed') === '1') return;
+  if (userLocations.length !== 0) return;
+  tutorialStep = 0;
+  renderTutorialStep();
+  window.addEventListener('resize', repositionTutorial);
+  window.addEventListener('scroll', repositionTutorial, true);
 }
 
-function dismissHelpOverlay() {
-  sessionStorage.setItem('helpDismissed', '1');
-  updateHelpOverlay();
+function endTutorial() {
+  sessionStorage.setItem('tutorialDismissed', '1');
+  clearTutorialHighlight();
+  const callout = document.getElementById('tutorialCallout');
+  if (callout) callout.hidden = true;
+  window.removeEventListener('resize', repositionTutorial);
+  window.removeEventListener('scroll', repositionTutorial, true);
+  tutorialStep = -1;
 }
 
-document.getElementById('helpClose')?.addEventListener('click', dismissHelpOverlay);
-document.getElementById('helpGotIt')?.addEventListener('click', dismissHelpOverlay);
+function clearTutorialHighlight() {
+  if (tutorialHighlight) {
+    tutorialHighlight.classList.remove('tutorial-target-highlight');
+    tutorialHighlight = null;
+  }
+}
+
+function renderTutorialStep() {
+  const step = TUTORIAL_STEPS[tutorialStep];
+  if (!step) { endTutorial(); return; }
+  const target = document.querySelector(step.selector);
+  if (!target) {
+    tutorialStep++;
+    renderTutorialStep();
+    return;
+  }
+  clearTutorialHighlight();
+  target.classList.add('tutorial-target-highlight');
+  tutorialHighlight = target;
+
+  const callout = document.getElementById('tutorialCallout');
+  document.getElementById('tutorialStepNum').textContent = `Step ${tutorialStep + 1} of ${TUTORIAL_STEPS.length}`;
+  document.getElementById('tutorialTitle').textContent = step.title;
+  document.getElementById('tutorialBody').textContent = step.body;
+  document.getElementById('tutorialPrev').disabled = tutorialStep === 0;
+  document.getElementById('tutorialNext').textContent = tutorialStep === TUTORIAL_STEPS.length - 1 ? 'Finish' : 'Next';
+  callout.hidden = false;
+  positionCallout(target, step.placement, callout);
+}
+
+function positionCallout(target, placement, callout) {
+  const oppositeArrow = { right: 'left', left: 'right', bottom: 'top', top: 'bottom' };
+  callout.className = `tutorial-callout arrow-${oppositeArrow[placement]}`;
+  requestAnimationFrame(() => {
+    const rect = target.getBoundingClientRect();
+    const cw = callout.offsetWidth;
+    const ch = callout.offsetHeight;
+    const gap = 14;
+    let top, left;
+    if (placement === 'right') {
+      left = rect.right + gap;
+      top = rect.top + rect.height / 2 - ch / 2;
+    } else if (placement === 'left') {
+      left = rect.left - cw - gap;
+      top = rect.top + rect.height / 2 - ch / 2;
+    } else if (placement === 'top') {
+      left = rect.left + rect.width / 2 - cw / 2;
+      top = rect.top - ch - gap;
+    } else {
+      left = rect.left + rect.width / 2 - cw / 2;
+      top = rect.bottom + gap;
+    }
+    left = Math.max(12, Math.min(left, window.innerWidth - cw - 12));
+    top = Math.max(12, Math.min(top, window.innerHeight - ch - 12));
+    callout.style.left = `${left}px`;
+    callout.style.top = `${top}px`;
+  });
+}
+
+function repositionTutorial() {
+  if (tutorialStep < 0) return;
+  const step = TUTORIAL_STEPS[tutorialStep];
+  const target = document.querySelector(step.selector);
+  const callout = document.getElementById('tutorialCallout');
+  if (target && callout) positionCallout(target, step.placement, callout);
+}
+
+document.getElementById('tutorialNext')?.addEventListener('click', () => {
+  tutorialStep++;
+  if (tutorialStep >= TUTORIAL_STEPS.length) endTutorial();
+  else renderTutorialStep();
+});
+
+document.getElementById('tutorialPrev')?.addEventListener('click', () => {
+  if (tutorialStep > 0) { tutorialStep--; renderTutorialStep(); }
+});
+
+document.getElementById('tutorialSkip')?.addEventListener('click', endTutorial);
 
 // Handle remove button clicks inside popups (event delegation)
 map.on('popupopen', (e) => {
@@ -848,3 +950,6 @@ document.addEventListener('mouseup', () => {
   sessionStorage.setItem('sidebarWidth', sidebar.offsetWidth);
   setTimeout(() => map.invalidateSize(), 50);
 });
+
+// Kick off the onboarding tutorial once all UI is in place
+startTutorial();
